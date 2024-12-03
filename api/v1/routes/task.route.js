@@ -1,29 +1,9 @@
 const express = require("express");
 const router = express.Router();
-// const controller = require("../../controller/task.controller")
-const Task = require("../../../models/task.model")
-router.get("/", async (req, res)=> {
-    const tasks = await Task.find(
-        {
-            deleted: false
-        }
-    )
-    console.log(tasks);
-    res.json(tasks);
-})
-router.get("/detail/:id", async (req, res) => {
-    try {
-        const id = req.params.id;
-        const task = await Task.findOne(
-            {
-                _id: id
-            }
-        )
-        res.json(task); //tra ve mot chuoi json 
-    }
-    catch(error)
-    {
-        res.json("Khong tim thay")
-    }
-})
+const controller = require("../controller/task.controller")
+// [GET] /api/v1/taskss
+router.get("/", controller.index);
+// [GET] /api/v1/tasks/detail/:id
+router.get("/detail/:id", controller.detail);
+// [GET] /api/v1/tasks?status=''
 module.exports = router
