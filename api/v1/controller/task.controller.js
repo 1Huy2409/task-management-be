@@ -8,7 +8,12 @@ module.exports.index = async (req, res) => {
     if (req.query.status) {
         find.status = req.query.status;
     }
-    const tasks = await Task.find(find);
+    const objectSort = {};
+    if (req.query.sortKey && req.query.sortValue) {
+        objectSort[req.query.sortKey] = req.query.sortValue;
+    }
+    console.log(objectSort);
+    const tasks = await Task.find(find).sort(objectSort);
     res.json(tasks);
 }
 // [GET] /api/v1/tasks/detail/:id
