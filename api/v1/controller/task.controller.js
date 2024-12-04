@@ -53,3 +53,27 @@ module.exports.detail = async (req, res) => {
         res.json("Không tìm thấy!");
     }
 }
+module.exports.changeStatus = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const newStatus = req.body.status;
+        await Task.updateOne(
+            {_id: id},
+            {
+                status: newStatus
+            }
+        )
+        res.json({
+            code: 200,
+            message: "Change status successfully!"
+        })
+    }
+    catch(error) {
+        res.json(
+            {
+                code: 400, 
+                message: "Change status failed! This ID is not exist!"
+            }
+        )
+    }
+}
