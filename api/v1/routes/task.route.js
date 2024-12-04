@@ -7,4 +7,6 @@ router.get("/", controller.index);
 router.get("/detail/:id", controller.detail);
 // [PATCH] /api/v1/tasks/change-status/:id
 router.patch("/change-status/:id", controller.changeStatus);
+// [PATCH] /api/v1/tasks/change-multi
+router.patch("/change-multi", controller.changeMulti);
 module.exports = router

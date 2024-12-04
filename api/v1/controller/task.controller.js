@@ -28,9 +28,11 @@ module.exports.index = async (req, res) => {
     paginationObject = paginationHelper(req.query, paginationObject, countTasks);    
     // end pagination
     // search
-    let objectSearch = searchHelper(req.query);
+    let objectSearch = {
+        keyword: ""
+    }
+    objectSearch = searchHelper(objectSearch, req.query);
     if (objectSearch.regex) {
-        console.log(objectSearch.regex);
         find.title = objectSearch.regex;
     }
     // end search
@@ -53,6 +55,7 @@ module.exports.detail = async (req, res) => {
         res.json("Không tìm thấy!");
     }
 }
+// [PATCH] /api/v1/tasks/change-status/:id
 module.exports.changeStatus = async (req, res) => {
     try {
         const id = req.params.id;
@@ -73,6 +76,40 @@ module.exports.changeStatus = async (req, res) => {
             {
                 code: 400, 
                 message: "Change status failed! This ID is not exist!"
+            }
+        )
+    }
+}
+// [PATCH] /api/v1/tasks/change-multi
+module.exports.changeMulti = async (req, res) => {
+    try {
+        const {ids, key, value} = req.body;
+        switch(key) {
+            case "status": 
+                await Task.updateMany(
+                    {
+                        _id: {$in: ids}
+                    },
+                    {
+                        status: value
+                    }
+                )
+                res.json(
+                    {
+                        code: 200, 
+                        message: "Change multi status successfully!"
+                    }
+                )
+                break;
+            default:
+                res.json("Not found");
+        }
+    }
+    catch(error) {
+        res.json(
+            {
+                code: 400,
+                message: "Change multi failed!"
             }
         )
     }
