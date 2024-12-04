@@ -131,6 +131,7 @@ module.exports.changeMulti = async (req, res) => {
         )
     }
 }
+// [POST] /api/v1/tasks/create
 module.exports.create = async(req, res) => {
     try {
         const newTask = new Task(req.body);
@@ -151,7 +152,7 @@ module.exports.create = async(req, res) => {
             }
         )
     }
-}
+}// [PATCH] /api/v1/tasks/edit/:id
 module.exports.edit = async(req, res) => {
     try{
         const id = req.params.id;
@@ -173,6 +174,7 @@ module.exports.edit = async(req, res) => {
         )
     }
 }
+// [DELETE] /api/v1/tasks/delete/:id
 module.exports.delete = async(req, res) => {
     try {
         const id = req.params.id;
