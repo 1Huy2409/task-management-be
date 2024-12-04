@@ -114,3 +114,24 @@ module.exports.changeMulti = async (req, res) => {
         )
     }
 }
+module.exports.create = async(req, res) => {
+    try {
+        const newTask = new Task(req.body);
+        await newTask.save();
+        res.json(
+            {
+                code: 200,
+                message: "Create task successfully!",
+                newTask
+            }
+        )
+    }
+    catch(error) {
+        res.json(
+            {
+                code: 400,
+                message: "Create task failed!"
+            }
+        )
+    }
+}
