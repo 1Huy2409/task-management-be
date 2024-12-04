@@ -101,6 +101,23 @@ module.exports.changeMulti = async (req, res) => {
                     }
                 )
                 break;
+            case "delete": 
+                await Task.updateMany(
+                    {
+                        _id: {$in: ids}
+                    },
+                    {
+                        deleted: true,
+                        deletedAt: new Date()
+                    }
+                )
+                res.json(
+                    {
+                        code: 200, 
+                        message: "Delete multi task successfully!"
+                    }
+                )
+                break;
             default:
                 res.json("Not found");
         }
@@ -152,6 +169,35 @@ module.exports.edit = async(req, res) => {
             {
                 code: 400, 
                 message: "Edit task failed!"
+            }
+        )
+    }
+}
+module.exports.delete = async(req, res) => {
+    try {
+        const id = req.params.id;
+        await Task.updateOne(
+            {
+                _id: id
+            }, 
+            {
+                deleted: true,
+                deletedAt: new Date()
+            }
+        )
+        res.json(
+            {
+                code: 200,
+                message: "Delete task successfully!",
+                id: id
+            }
+        )
+    }
+    catch(error) {
+        res.json(
+            {
+                code: 400, 
+                message: "Delete task failed!"
             }
         )
     }
