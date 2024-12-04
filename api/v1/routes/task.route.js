@@ -11,4 +11,6 @@ router.patch("/change-status/:id", controller.changeStatus);
 router.patch("/change-multi", controller.changeMulti);
 // [POST] /api/v1/tasks/create
 router.post("/create", controller.create);
+// [PATCH] /api/v1/tasks/edit/:id
+router.patch("/edit/:id", controller.edit);
 module.exports = router
