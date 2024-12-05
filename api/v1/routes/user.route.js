@@ -24,4 +24,6 @@ router.post(
 );
 // [GET] /api/v1/users/detail
 router.get("/detail", authMiddleware.requestAuth, controller.detail);
+// [GET] /api/v1/users/list
+router.get("/list", authMiddleware.requestAuth, controller.list);
 module.exports = router;
