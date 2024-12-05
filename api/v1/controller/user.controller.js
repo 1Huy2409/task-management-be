@@ -14,16 +14,23 @@ module.exports.register = async (req, res) => {
   if (existEmail) {
     res.json({
       code: 400,
-      message: "Email đã tồn tại",
+      message: "Email already exists",
     });
   } else {
-    const user = new User(req.body);
+    const user = new User(
+      {
+        fullName: req.body.fullName,
+        email: req.body.email,
+        password: req.body.password,
+        token: generateHelper.generateRandomString(20)
+      }
+    );
     await user.save();
     const token = user.token;
     res.cookie("token", token);
     res.json({
       code: 200,
-      message: "Đăng ký tài khoản thành công",
+      message: "Account registration successful",
       tokenUser: token,
     });
   }
@@ -39,21 +46,21 @@ module.exports.login = async (req, res) => {
   if (!user) {
     res.json({
       code: 400,
-      message: "Email không tồn tại!",
+      message: "Email does not exist!",
     });
     return;
   }
   if (md5(password) !== user.password) {
     res.json({
       code: 400,
-      message: "Mật khẩu không đúng!",
+      message: "Password is incorrect!",
     });
     return;
   }
   res.cookie("token", user.token);
   res.json({
     code: 200,
-    message: "Đăng nhập thành công",
+    message: "Log in successfully",
   });
 };
 // [POST] /api/v1/users/password/forgot
@@ -66,7 +73,7 @@ module.exports.forgotPassword = async (req, res) => {
   if (!user) {
     res.json({
       code: 400,
-      message: "Email không tồn tại!",
+      message: "Email does not exist!",
     });
     return;
   }
@@ -83,7 +90,7 @@ module.exports.forgotPassword = async (req, res) => {
   sendMailHelper.sendEmail(email, subject, html);
   res.json({
     code: 200,
-    message: "Đã gửi mã OTP qua email!",
+    message: "OTP code sent via email!",
   });
 };
 // [POST] /api/v1/users/password/otp
@@ -97,7 +104,7 @@ module.exports.otpPassword = async (req, res) => {
   if (!forgotPassword) {
     res.json({
       code: 400,
-      message: "OTP không hợp lệ",
+      message: "OTP is not valid",
     });
     return;
   }
@@ -109,7 +116,7 @@ module.exports.otpPassword = async (req, res) => {
   res.cookie("token", token);
   res.json({
     code: 200,
-    message: "Xác thực OTP thành công!",
+    message: "OTP authentication successful!",
     token: token,
   });
 };
@@ -123,7 +130,7 @@ module.exports.resetPassword = async (req, res) => {
   if (md5(password) === user.password) {
     res.json({
       code: 400,
-      message: "Vui lòng nhập mật khẩu mới khác mật khẩu cũ",
+      message: "Please enter a new password different from the old password",
     });
     return;
   }
@@ -137,19 +144,14 @@ module.exports.resetPassword = async (req, res) => {
   );
   res.json({
     code: 200,
-    message: "Đổi mật khẩu thành công",
+    message: "Changed password successfully",
   });
 };
 // [GET] /api/v1/users/detail
 module.exports.detail = async (req, res) => {
-  const token = req.cookies.token;
-  console.log(token);
-  const user = await User.findOne({ token: token, deleted: false }).select(
-    "-password -token"
-  );
   res.json({
     code: 200,
-    message: "Lấy thông tin cá nhân thành công",
-    user: user,
+    message: "Get user information successfully!",
+    user: req.user,
   });
 };

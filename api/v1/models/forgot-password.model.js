@@ -13,6 +13,6 @@ const forgotPasswordSchema = new mongoose.Schema(
         timestamps: true
     }
 );
-const ForgotPassword = mongoose.model('ForgotPassword', forgotPasswordSchema, "forgot-password"); // forgot-password: tên table trong database
+const ForgotPassword = mongoose.model('ForgotPassword', forgotPasswordSchema, "forgot-password");
 
 module.exports = ForgotPassword;
