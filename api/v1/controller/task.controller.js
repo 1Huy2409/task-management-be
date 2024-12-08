@@ -141,7 +141,8 @@ module.exports.create = async (req, res) => {
       message: "Create task failed!",
     });
   }
-}; // [PATCH] /api/v1/tasks/edit/:id
+}; 
+// [PATCH] /api/v1/tasks/edit/:id
 module.exports.edit = async (req, res) => {
   try {
     const id = req.params.id;
