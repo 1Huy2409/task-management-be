@@ -7,7 +7,9 @@ export enum ResourceType {
     GLOBAL = 'global',
     WORKSPACE = 'workspace',
     BOARD = 'board',
-    LIST = 'list'
+    LIST = 'list',
+    CARD = 'card',
+    COMMENT = 'comment',
 }
 
 @Entity('permissions')

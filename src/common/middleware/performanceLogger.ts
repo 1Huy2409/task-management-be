@@ -6,7 +6,7 @@ export const performanceLogger = (routeName: string) => {
 
         // Log request info
         console.log('\n' + '='.repeat(80));
-        console.log(`🚀 [${routeName}] Request Started`);
+        console.log(`   [${routeName}] Request Started`);
         console.log(`   Method: ${req.method}`);
         console.log(`   Path: ${req.path}`);
         console.log(`   Params:`, req.params);
@@ -23,7 +23,7 @@ export const performanceLogger = (routeName: string) => {
             const duration = Number(endTime - startTime) / 1_000_000; // Convert to milliseconds
 
             console.log('\n' + '='.repeat(80));
-            console.log(`✅ [${routeName}] Request Completed`);
+            console.log(`   [${routeName}] Request Completed`);
             console.log(`   Status Code: ${res.statusCode}`);
             console.log(`   Duration: ${duration.toFixed(3)} ms`);
             console.log(`   Timestamp: ${new Date().toISOString()}`);

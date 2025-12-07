@@ -38,12 +38,12 @@ export class RbacService {
         if (cachedDecision !== null) {
             const endTime = process.hrtime.bigint();
             const duration = Number(endTime - startTime) / 1_000_000;
-            console.log(`   ✅ [CACHE HIT] Permission check from cache: ${duration.toFixed(3)} ms`);
+            console.log(`   [CACHE HIT] Permission check from cache: ${duration.toFixed(3)} ms`);
             console.log(`      User: ${userId}, Permission: ${permissionAction}, Result: ${cachedDecision}`);
             return cachedDecision;
         }
 
-        console.log(`   ❌ [CACHE MISS] Computing permission from database...`);
+        console.log(`   [CACHE MISS] Computing permission from database...`);
         const dbStartTime = process.hrtime.bigint();
         const result = await this.computePermission(userId, permissionAction, context);
         const dbEndTime = process.hrtime.bigint();
@@ -113,8 +113,7 @@ export class RbacService {
         memberships.sort((a, b) => priority[b.scope] - priority[a.scope]);
 
         for (const m of memberships) {
-            const resourceType = this.mapScopeToResourceType(m.scope);
-            if (this.roleHasPermission(m.role, permissionAction, resourceType)) {
+            if (this.roleHasPermission(m.role, permissionAction)) {
                 return true;
             }
         }
@@ -136,11 +135,11 @@ export class RbacService {
         if (cachedMemberships !== null) {
             const endTime = process.hrtime.bigint();
             const duration = Number(endTime - startTime) / 1_000_000;
-            console.log(`   ✅ [CACHE HIT] Membership from cache: ${duration.toFixed(3)} ms`);
+            console.log(`   [CACHE HIT] Membership from cache: ${duration.toFixed(3)} ms`);
             return cachedMemberships;
         }
 
-        console.log(`   ❌ [CACHE MISS] Fetching membership from database...`);
+        console.log(`   [CACHE MISS] Fetching membership from database...`);
         const dbStartTime = process.hrtime.bigint();
         const memberships: Membership[] = [];
         if (boardId) {
@@ -282,31 +281,44 @@ export class RbacService {
         ]);
     }
 
-
-    // utility functions
-    private mapScopeToResourceType(scope: RoleScope): ResourceType {
-        switch (scope) {
-            case RoleScope.WORKSPACE:
-                return ResourceType.WORKSPACE;
-            case RoleScope.BOARD:
-                return ResourceType.BOARD;
-            case RoleScope.GLOBAL:
-            default:
-                return ResourceType.GLOBAL;
-        }
-    }
-
     private roleHasPermission(
         role: Role,
         requiredAction: string,
-        resourceType: ResourceType
     ): boolean {
         if (!role || !role.rolePermissions) {
             return false;
         }
+
+        const resourceTypes = this.getCompatibleResourceTypes(role.scope);
         return role.rolePermissions.some((rp) => {
             const permission = rp.permission;
-            return permission.action === requiredAction && permission.resourceType === resourceType;
+            return permission.action === requiredAction && resourceTypes.includes(permission.resourceType);
         })
+    }
+
+    private getCompatibleResourceTypes(scope: RoleScope): ResourceType[] {
+        switch (scope) {
+            case RoleScope.BOARD:
+                // Board scope có thể quản lý: Board, List, Card
+                return [
+                    ResourceType.BOARD,
+                    ResourceType.LIST,
+                    ResourceType.CARD,
+                    ResourceType.COMMENT
+                ];
+            case RoleScope.WORKSPACE:
+                // Workspace scope có thể quản lý: Workspace, Board, List, Card
+                return [
+                    ResourceType.WORKSPACE,
+                    ResourceType.BOARD,
+                    ResourceType.LIST,
+                    ResourceType.CARD,
+                    ResourceType.COMMENT
+                ];
+            case RoleScope.GLOBAL:
+            default:
+                // Global có thể quản lý tất cả
+                return Object.values(ResourceType);
+        }
     }
 }
