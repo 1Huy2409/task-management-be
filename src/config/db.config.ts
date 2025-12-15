@@ -16,7 +16,11 @@ import { Permission } from "../common/entities/permission.entity";
 import { RolePermission } from "../common/entities/role-permission.entity";
 import { config } from "dotenv";
 import { WorkspaceJoinLink } from "../common/entities/workspace-join-link.entity";
+import { BoardTemplate } from "../common/entities/board-template.entity";
+import { BoardTemplateList } from "../common/entities/board-template-list.entity";
+
 config();
+
 export const AppDataSource = new DataSource({
     type: 'postgres',
     host: process.env.POSTGRES_HOST || 'postgres',
@@ -27,7 +31,11 @@ export const AppDataSource = new DataSource({
     connectTimeoutMS: 10000,
     synchronize: true,
     logging: true,
-    entities: [User, Workspace, WorkspaceMember, Notification, List, Comment, Card, CardMember, Board, BoardMember, BoardJoinLink, Role, Permission, RolePermission, WorkspaceJoinLink],
+    entities: [
+        User, Workspace, WorkspaceMember, Notification, List, Comment, Card, CardMember,
+        Board, BoardMember, BoardJoinLink, Role, Permission, RolePermission, WorkspaceJoinLink,
+        BoardTemplate, BoardTemplateList
+    ],
     migrations: [path.join(__dirname, '../common/migrations/*.{ts,js}')],
     migrationsRun: false
 })

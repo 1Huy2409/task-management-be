@@ -28,6 +28,18 @@ export default class BoardController {
         )
         return handleServiceResponse(serviceResponse, res);
     }
+
+    getAllTemplates = async (req: Request, res: Response) => {
+        const templates = await this.boardService.getAllTemplates();
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Get all board templates successfully',
+            templates,
+            StatusCodes.OK
+        )
+        return handleServiceResponse(serviceResponse, res);
+    }
+
     getAllPublicBoards = async (req: Request, res: Response) => {
         const boards = await this.boardService.getAllPublicBoards();
         const serviceResponse = new ServiceResponse(

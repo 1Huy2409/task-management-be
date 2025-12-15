@@ -12,7 +12,10 @@ import { BoardVisibility } from '@/common/entities/board.entity';
 import { BoardJoinLink } from "@/common/entities/board-join-link.entity";
 import { RoleScope } from "@/common/entities/role.entity";
 import { nanoid } from "nanoid";
+import { IBoardTemplateRepository } from "./repositories/board-template.repository.interface";
 import { EmailService } from "@/common/utils/mailService";
+import { DataSource } from "typeorm";
+import { List } from "@/common/entities/list.entity";
 
 export default class BoardService {
     private emailService: EmailService;
@@ -24,8 +27,14 @@ export default class BoardService {
         private boardMemberRepository: IBoardMemberRepository,
         private roleRepository: IRoleRepository,
         private userRepository: IUserRepository,
+        private boardTemplateRepository: IBoardTemplateRepository,
+        private dataSource: DataSource
     ) {
         this.emailService = new EmailService();
+    }
+
+    getAllTemplates = async () => {
+        return await this.boardTemplateRepository.findAll();
     }
 
     // get board with visibility is public
@@ -87,6 +96,36 @@ export default class BoardService {
             userId: creatorId,
             roleId: ownerRole.id,
         });
+
+
+        // Apply Template Metadata & Create Lists
+        if (data.templateId) {
+            const template = await this.boardTemplateRepository.findByIdWithLists(data.templateId);
+            if (template) {
+                if (!data.description && template.description) {
+                    board.description = template.description;
+                }
+                if (!data.coverUrl && template.coverUrl) {
+                    board.coverUrl = template.coverUrl;
+                }
+                await this.boardRepository.save(board);
+
+                // Create Default Lists
+                if (template.lists) {
+                    const listRepo = this.dataSource.getRepository(List);
+                    const listPromises = template.lists.map(async (list: any) => {
+                        const newList = listRepo.create({
+                            title: list.title,
+                            position: list.position,
+                            board: board
+                        });
+                        await listRepo.save(newList);
+                    });
+                    await Promise.all(listPromises);
+                }
+            }
+        }
+
         return toBoardResponse(board);
     }
 

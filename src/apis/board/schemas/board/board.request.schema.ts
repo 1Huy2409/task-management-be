@@ -8,6 +8,7 @@ export const CreateBoardSchema = z.object({
     description: z.string().max(1000).nullable().optional().openapi({ description: 'Description of the board', example: 'This is a sample board description.' }),
     coverUrl: z.url().min(10).max(255).optional().openapi({ description: 'Cover image URL of the board', example: 'https://example.com/cover.jpg' }),
     visibility: z.enum(BoardVisibility).optional().default(BoardVisibility.WORKSPACE).openapi({ description: 'Visibility of the board', example: BoardVisibility.WORKSPACE }),
+    templateId: z.string().uuid().optional().openapi({ description: 'ID of the template to use for the board', example: '123e4567-e89b-12d3-a456-426614174000' }),
 })
 export const PostBoardRequest: ZodRequestBody = {
     description: 'Create new board',

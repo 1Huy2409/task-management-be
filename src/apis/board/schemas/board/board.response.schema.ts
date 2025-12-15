@@ -18,5 +18,18 @@ export const BoardResponseSchema = z.object({
 })
 
 export const ListBoardResponseSchema = z.array(BoardResponseSchema);
+
+export const BoardTemplateSchema = z.object({
+    id: z.string().uuid().openapi({ example: '123e4567-e89b-12d3-a456-426614174000' }),
+    name: z.string().openapi({ example: 'Kanban Board' }),
+    description: z.string().nullable().openapi({ example: 'A simple Kanban board with To Do, In Progress, and Done lists.' }),
+    coverUrl: z.string().nullable().openapi({ example: 'https://example.com/cover.jpg' }),
+    type: z.string().openapi({ example: 'SYSTEM' }),
+    createdAt: z.date().openapi({ example: new Date() }),
+    updatedAt: z.date().openapi({ example: new Date() })
+})
+
+export const ListBoardTemplateSchema = z.array(BoardTemplateSchema);
+;
 export type ListBoardResponse = z.infer<typeof ListBoardResponseSchema>;
 export type BoardResponse = z.infer<typeof BoardResponseSchema>;

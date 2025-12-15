@@ -3,10 +3,12 @@ import { Router } from "express";
 import BoardController from "./board.controller";
 import { asyncHandler } from "@/common/middleware/asyncHandler";
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
-import { 
-    BoardResponseSchema, 
-    ListBoardResponseSchema, 
-    PostBoardWithWorkspaceRequest, 
+import {
+    BoardResponseSchema,
+    ListBoardResponseSchema,
+    BoardTemplateSchema,
+    ListBoardTemplateSchema,
+    PostBoardWithWorkspaceRequest,
     PatchBoardRequest,
     PostBoardJoinLinkRequest,
     BoardJoinLinkResponseSchema,
@@ -21,9 +23,19 @@ import { PERMISSIONS } from "@/common/constants/permissions";
 
 export const boardRegistry = new OpenAPIRegistry()
 boardRegistry.register('Board', BoardResponseSchema)
+boardRegistry.register('BoardTemplate', BoardTemplateSchema)
 boardRegistry.register('BoardJoinLink', BoardJoinLinkResponseSchema)
 export default function boardRouter(boardController: BoardController): Router {
     const router: Router = Router()
+
+    boardRegistry.registerPath({
+        method: 'get',
+        path: '/api/v1/boards/templates',
+        tags: ['Board'],
+        security: [{ bearerAuth: [] }],
+        responses: createApiResponse(ListBoardTemplateSchema, 'Success')
+    })
+    router.get('/templates', asyncHandler(boardController.getAllTemplates))
 
     boardRegistry.registerPath({
         method: 'get',

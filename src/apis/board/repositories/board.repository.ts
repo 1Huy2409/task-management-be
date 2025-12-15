@@ -9,6 +9,13 @@ export class BoardRepository implements IBoardRepository {
         return await this.boardRepository.findOne({ where: { id } });
     }
 
+    async findByIdWithWorkspace(id: string): Promise<Board | null> {
+        return await this.boardRepository.findOne({
+            where: { id },
+            relations: ['workspace']
+        });
+    }
+
     async findAll(): Promise<Board[]> {
         return await this.boardRepository.find();
     }
@@ -47,8 +54,13 @@ export class BoardRepository implements IBoardRepository {
         return await this.boardRepository.save(board);
     }
 
-    async update(id: string, data: Partial<Board>): Promise<Board> {
-        return await this.boardRepository.save({ id, ...data });
+    async update(id: string, board: Partial<Board>): Promise<Board> {
+        await this.boardRepository.update(id, board);
+        return await this.findById(id) as Board;
+    }
+
+    async save(board: Board): Promise<Board> {
+        return await this.boardRepository.save(board);
     }
 
     async delete(id: string): Promise<any> {
