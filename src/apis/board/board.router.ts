@@ -16,10 +16,12 @@ import {
     PostJoinBoardByLinkRequest,
     PostInviteByEmailRequest
 } from "./schemas";
+import { ListResponseSchema } from "../list/schemas/list.response.schema";
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilder';
 import { checkAuthentication } from "@/common/middleware/authentication";
 import { checkBoardPermission, checkWorkspacePermission } from "@/common/middleware/authorization";
 import { PERMISSIONS } from "@/common/constants/permissions";
+import { CopyListRequest, MoveListRequest, PostListRequest, ReorderListRequest } from "../list/schemas/list.request.schema";
 
 export const boardRegistry = new OpenAPIRegistry()
 boardRegistry.register('Board', BoardResponseSchema)
@@ -60,6 +62,29 @@ export default function boardRouter(boardController: BoardController): Router {
         asyncHandler(checkAuthentication),
         asyncHandler(checkWorkspacePermission(PERMISSIONS.BOARD_CREATE)),
         asyncHandler(boardController.createBoard))
+
+    // Begin manage lists - must be defined before /:id routes to avoid param conflicts
+    boardRegistry.registerPath({
+        method: 'post',
+        path: '/api/v1/boards/{boardId}/lists',
+        tags: ['Board'],
+        security: [{ bearerAuth: [] }],
+        request: {
+            params: z.object({
+                boardId: z.uuid().openapi({
+                    example: 'b9860e4c-5ba0-4715-b483-87fc69bfc6ef',
+                    description: 'Board UUID',
+                    format: 'uuid'
+                })
+            }),
+            body: PostListRequest
+        },
+        responses: createApiResponse(ListResponseSchema, 'Success')
+    })
+    router.post('/:boardId/lists',
+        asyncHandler(checkAuthentication),
+        asyncHandler(checkBoardPermission(PERMISSIONS.LIST_CREATE)),
+        asyncHandler(boardController.createList))
 
     boardRegistry.registerPath({
         method: 'get',
@@ -180,6 +205,26 @@ export default function boardRouter(boardController: BoardController): Router {
         asyncHandler(checkBoardPermission(PERMISSIONS.BOARD_VIEW_MEMBERS)),
         asyncHandler(boardController.getBoardJoinLinks))
 
+    boardRegistry.registerPath({
+        method: 'get',
+        path: '/api/v1/boards/{boardId}/lists',
+        tags: ['List'],
+        security: [{ bearerAuth: [] }],
+        request: {
+            params: z.object({
+                boardId: z.uuid().openapi({
+                    example: 'b9860e4c-5ba0-4715-b483-87fc69bfc6ef',
+                    description: 'Board UUID',
+                    format: 'uuid'
+                })
+            })
+        },
+        responses: createApiResponse(z.array(ListResponseSchema), 'Success')
+    })
+    router.get('/:boardId/lists',
+        asyncHandler(checkAuthentication),
+        asyncHandler(checkBoardPermission(PERMISSIONS.LIST_VIEW)),
+        asyncHandler(boardController.getListsByBoardId))
     // Get board members
     boardRegistry.registerPath({
         method: 'get',
@@ -316,7 +361,7 @@ export default function boardRouter(boardController: BoardController): Router {
         asyncHandler(checkBoardPermission(PERMISSIONS.BOARD_UPDATE)),
         asyncHandler(boardController.reopenBoard))
 
-    // permanent delete
+   
     boardRegistry.registerPath({
         method: 'delete',
         path: '/api/v1/boards/{id}/permanent',
@@ -332,7 +377,7 @@ export default function boardRouter(boardController: BoardController): Router {
         asyncHandler(checkBoardPermission(PERMISSIONS.BOARD_DELETE)),
         asyncHandler(boardController.deletePermanent))
 
-    // change owner
+
     const ChangeOwnerBody = z.object({ ownerId: z.string().uuid().openapi({ example: '123e4567-e89b-12d3-a456-426614174000' }) });
     const PostChangeOwnerRequest = {
         description: 'Change board owner',
@@ -358,5 +403,6 @@ export default function boardRouter(boardController: BoardController): Router {
         asyncHandler(checkAuthentication),
         asyncHandler(checkBoardPermission(PERMISSIONS.BOARD_UPDATE)),
         asyncHandler(boardController.changeOwner))
+
     return router;
 }
