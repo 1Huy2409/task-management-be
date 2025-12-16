@@ -5,14 +5,16 @@ import { ResponseStatus, ServiceResponse } from "@/common/models/service.respons
 import { StatusCodes } from "http-status-codes";
 import { handleServiceResponse } from "@/common/utils/httpHandler";
 import { AuthFailureError, BadRequestError } from "@/common/handler/error.response";
-import { CreateBoardWithWorkspaceSchema, UpdateBoardSchema, CreateBoardJoinLinkDto, JoinBoardByLinkDto, InviteByEmailDto } from "./schemas";
+import { CreateBoardWithWorkspaceSchema, UpdateBoardSchema, CreateBoardJoinLinkDto, JoinBoardByLinkDto, InviteByEmailDto, PostBoardRoleSchema, PatchBoardRoleSchema } from "./schemas";
+import { BoardRoleService } from "./board-role.service";
 import { CreateListSchema } from "../list/schemas";
 import ListService from "../list/list.service";
 
 export default class BoardController {
     constructor(
         private boardService: BoardService,
-        private listService: ListService
+        private listService: ListService,
+        private boardRoleService: BoardRoleService
     ) { }
     createBoard = async (req: Request, res: Response) => {
         const userId = req.user?.id;
@@ -68,6 +70,22 @@ export default class BoardController {
         )
         return handleServiceResponse(serviceResponse, res);
     }
+
+    getBoardById = async (req: Request, res: Response) => {
+        const { id } = req.params;
+        if (!id) {
+            throw new BadRequestError('Board id is required');
+        }
+        const board = await this.boardService.getBoardById(id);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Get board by ID successfully',
+            board,
+            StatusCodes.OK
+        )
+        return handleServiceResponse(serviceResponse, res);
+    }
+
     deleteBoard = async (req: Request, res: Response) => {
         const { id } = req.params;
         if (!id) {
@@ -287,6 +305,128 @@ export default class BoardController {
             'Create list successfully',
             newList,
             StatusCodes.CREATED
+        )
+        return handleServiceResponse(serviceResponse, res);
+    }
+
+    createTemplate = async (req: Request, res: Response) => {
+        const data = req.body;
+        const template = await this.boardService.createTemplate(data);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Create board template successfully',
+            template,
+            StatusCodes.CREATED
+        )
+        return handleServiceResponse(serviceResponse, res);
+    }
+
+    createTemplateFromBoard = async (req: Request, res: Response) => {
+        const { boardId } = req.params;
+        const data = req.body;
+        const template = await this.boardService.createTemplateFromBoard(boardId as string, data);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Create template from board successfully',
+            template,
+            StatusCodes.CREATED
+        )
+        return handleServiceResponse(serviceResponse, res);
+    }
+
+    getTemplateById = async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const template = await this.boardService.getTemplateById(id as string);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Get board template details successfully',
+            template,
+            StatusCodes.OK
+        )
+        return handleServiceResponse(serviceResponse, res);
+    }
+
+    // Board Roles
+    getBoardRoles = async (req: Request, res: Response) => {
+        const { id } = req.params;
+        if (!id) throw new BadRequestError('Board id is required');
+        const roles = await this.boardRoleService.getRoles(id);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Get board roles successfully',
+            roles,
+            StatusCodes.OK
+        )
+        return handleServiceResponse(serviceResponse, res);
+    }
+
+    createBoardRole = async (req: Request, res: Response) => {
+        const { id } = req.params;
+        if (!id) throw new BadRequestError('Board id is required');
+        const data: PostBoardRoleSchema = req.body;
+        const role = await this.boardRoleService.createRole(id, data);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Create board role successfully',
+            role,
+            StatusCodes.CREATED
+        )
+        return handleServiceResponse(serviceResponse, res);
+    }
+
+    updateBoardRole = async (req: Request, res: Response) => {
+        const { id, roleId } = req.params;
+        if (!id || !roleId) throw new BadRequestError('Board id and role id are required');
+        const data: PatchBoardRoleSchema = req.body;
+        const role = await this.boardRoleService.updateRole(id, roleId, data);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Update board role successfully',
+            role,
+            StatusCodes.OK
+        )
+        return handleServiceResponse(serviceResponse, res);
+    }
+
+    deleteBoardRole = async (req: Request, res: Response) => {
+        const { id, roleId } = req.params;
+        if (!id || !roleId) throw new BadRequestError('Board id and role id are required');
+        await this.boardRoleService.deleteRole(id, roleId);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Delete board role successfully',
+            null,
+            StatusCodes.OK
+        )
+        return handleServiceResponse(serviceResponse, res);
+    }
+
+    updateMemberRole = async (req: Request, res: Response) => {
+        const { id, userId } = req.params;
+        const { roleId } = req.body; // Expecting roleId in body
+        if (!id || !userId) throw new BadRequestError('Board id and user id are required');
+        if (!roleId) throw new BadRequestError('Role id is required');
+
+        await this.boardService.updateMemberRole(id, userId, roleId);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Update member role successfully',
+            null,
+            StatusCodes.OK
+        )
+        return handleServiceResponse(serviceResponse, res);
+    }
+
+    removeMember = async (req: Request, res: Response) => {
+        const { id, userId } = req.params;
+        if (!id || !userId) throw new BadRequestError('Board id and user id are required');
+
+        await this.boardService.removeMemberFromBoard(id, userId);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Remove member from board successfully',
+            null,
+            StatusCodes.OK
         )
         return handleServiceResponse(serviceResponse, res);
     }

@@ -32,10 +32,21 @@ export class BoardRepository implements IBoardRepository {
         });
     }
 
-    async findBoardsByWorkspaceId(workspaceId: string): Promise<Board[]> {
-        return await this.boardRepository.find({
-            where: { workspaceId: workspaceId, status: BoardStatus.ACTIVE }
-        });
+    async findBoardsByWorkspaceId(workspaceId: string, userId: string): Promise<Board[]> {
+        return await this.boardRepository.createQueryBuilder('board')
+            .leftJoin('board.boardMembers', 'member')
+            .where('board.workspaceId = :workspaceId', { workspaceId })
+            .andWhere('board.status = :status', { status: BoardStatus.ACTIVE })
+            .andWhere(
+                '(board.visibility = :public OR board.visibility = :workspace OR (board.visibility = :private AND (board.ownerId = :userId OR member.userId = :userId)))',
+                {
+                    public: BoardVisibility.PUBLIC,
+                    workspace: BoardVisibility.WORKSPACE,
+                    private: BoardVisibility.PRIVATE,
+                    userId
+                }
+            )
+            .getMany();
     }
 
     async findBoardByWorkspaceId(id: string, workspaceId: string): Promise<Board | null> {

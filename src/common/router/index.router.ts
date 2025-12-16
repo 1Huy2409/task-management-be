@@ -20,6 +20,7 @@ import { BoardMember } from '../entities/board-member.entity'
 import { BoardJoinLink } from '../entities/board-join-link.entity'
 import { BoardTemplate } from '../entities/board-template.entity'
 import BoardService from '@/apis/board/board.service'
+import { BoardRoleService } from '@/apis/board/board-role.service'
 import BoardController from '@/apis/board/board.controller'
 import boardRouter from '@/apis/board/board.router'
 import { Role } from '../entities/role.entity'
@@ -127,6 +128,16 @@ const initBoardModule = () => {
     const boardTemplateRepository = new BoardTemplateRepository(boardTemplateOrmRepo);
     const roleOrmRepo = AppDataSource.getRepository(Role);
     const roleRepository = new RoleRepository(roleOrmRepo);
+
+    // Board Role Service Dependencies
+    const permissionOrmRepo = AppDataSource.getRepository(Permission);
+    const permissionRepository = new PermissionRepository(permissionOrmRepo);
+    const rolePermissionOrmRepo = AppDataSource.getRepository(RolePermission);
+    const rolePermissionRepository = new RolePermissionRepository(rolePermissionOrmRepo);
+    const rbacService = new RbacService();
+
+    const boardRoleService = new BoardRoleService(roleRepository, permissionRepository, rolePermissionRepository, rbacService);
+
     const userOrmRepo = AppDataSource.getRepository(User);
     const userRepository = new UserRepository(userOrmRepo);
     const boardService = new BoardService(
@@ -137,7 +148,9 @@ const initBoardModule = () => {
         roleRepository,
         userRepository,
         boardTemplateRepository,
-        AppDataSource
+        AppDataSource,
+        listRepository,
+        rbacService
     );
     const listService = new ListService(
         listRepository,
@@ -145,7 +158,7 @@ const initBoardModule = () => {
         cardRepository,
         AppDataSource
     )
-    const boardController = new BoardController(boardService, listService);
+    const boardController = new BoardController(boardService, listService, boardRoleService);
 
     mainRouter.use('/boards', boardRouter(boardController))
 }

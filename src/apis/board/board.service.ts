@@ -1,4 +1,5 @@
 import { BoardResponse, CreateBoardSchema, UpdateBoardSchema, CreateBoardJoinLinkDto, BoardJoinLinkResponse, InviteByEmailDto } from "./schemas";
+import { CreateBoardTemplateDto, CreateBoardTemplateFromBoardDto } from "./schemas/board-template/board-template.request.schema";
 import { NotFoundError, ConflictRequestError, BadRequestError } from "@/common/handler/error.response";
 import { toBoardResponse } from "./mapper/board.mapper";
 import { toBoardJoinLinkResponse } from "./mapper/board-join-link.mapper";
@@ -12,10 +13,14 @@ import { BoardVisibility } from '@/common/entities/board.entity';
 import { BoardJoinLink } from "@/common/entities/board-join-link.entity";
 import { RoleScope } from "@/common/entities/role.entity";
 import { nanoid } from "nanoid";
+import { BoardTemplate, BoardTemplateType } from "@/common/entities/board-template.entity";
 import { IBoardTemplateRepository } from "./repositories/board-template.repository.interface";
 import { EmailService } from "@/common/utils/mailService";
 import { DataSource } from "typeorm";
-import { List } from "@/common/entities/list.entity";
+import { IListRepository } from "../list/repositories/list.repository.interface";
+
+import { RbacService } from "@/common/rbac/rbac.service";
+
 
 export default class BoardService {
     private emailService: EmailService;
@@ -28,13 +33,113 @@ export default class BoardService {
         private roleRepository: IRoleRepository,
         private userRepository: IUserRepository,
         private boardTemplateRepository: IBoardTemplateRepository,
-        private dataSource: DataSource
+        private dataSource: DataSource,
+        private listRepository: IListRepository,
+        private rbacService: RbacService
     ) {
         this.emailService = new EmailService();
     }
 
+
+    updateMemberRole = async (boardId: string, userId: string, roleId: string): Promise<void> => {
+        const board = await this.boardRepository.findById(boardId);
+        if (!board) {
+            throw new NotFoundError('Board not found');
+        }
+
+        const member = await this.boardMemberRepository.findByBoardAndUserId(boardId, userId);
+        if (!member) {
+            throw new NotFoundError('Member not found in this board');
+        }
+
+        const role = await this.roleRepository.findById(roleId);
+        if (!role) {
+            throw new NotFoundError('Role not found');
+        }
+
+        if (role.scope !== RoleScope.BOARD) {
+            throw new BadRequestError('Role is not a board role');
+        }
+
+        console.log(`Updating role for user ${userId} in board ${boardId} to role ${roleId}`);
+        // Clear relation to avoid conflicts, precise update using roleId
+        member.roleId = roleId;
+        // member.role = undefined as any; // Optional: force TypeORM to reload or ignore relation
+
+        // Use save instead of update to ensure persistence
+        await this.boardMemberRepository.save(member);
+        console.log('Role updated in DB. Invalidating cache...');
+
+        await this.rbacService.onBoardMemberRoleChanged(userId, boardId);
+        console.log('Cache invalidated.');
+    }
+
+    removeMemberFromBoard = async (boardId: string, userId: string): Promise<void> => {
+        const board = await this.boardRepository.findById(boardId);
+        if (!board) {
+            throw new NotFoundError('Board not found');
+        }
+
+        const member = await this.boardMemberRepository.findByBoardAndUserId(boardId, userId);
+        if (!member) {
+            throw new NotFoundError('Member not found in this board');
+        }
+
+
+        const role = await this.roleRepository.findById(member.roleId);
+        if (role?.name === 'board_owner') {
+
+        }
+
+        await this.boardMemberRepository.delete(member.id);
+        await this.rbacService.onUserRemovedFromBoard(userId, boardId);
+    }
+
     getAllTemplates = async () => {
         return await this.boardTemplateRepository.findAll();
+    }
+
+    getTemplateById = async (id: string): Promise<BoardTemplate> => {
+        const template = await this.boardTemplateRepository.findByIdWithLists(id);
+        if (!template) {
+            throw new NotFoundError(`Board template with ID ${id} not found`);
+        }
+        return template;
+    }
+
+    createTemplate = async (data: CreateBoardTemplateDto): Promise<BoardTemplate> => {
+        // Calculate positions if not provided
+        const listsWithPositions = data.lists?.map((list, index) => ({
+            title: list.title,
+            position: list.position ?? (index + 1) * 1024
+        })) || [];
+
+        return await this.boardTemplateRepository.createWithLists({
+            name: data.name,
+            description: data.description ?? null,
+            coverUrl: data.coverUrl ?? null,
+            type: BoardTemplateType.CUSTOM
+        }, listsWithPositions);
+    }
+
+    createTemplateFromBoard = async (boardId: string, data: CreateBoardTemplateFromBoardDto): Promise<BoardTemplate> => {
+        const board = await this.boardRepository.findById(boardId);
+        if (!board) {
+            throw new NotFoundError(`Board with ID ${boardId} not found`);
+        }
+
+        const lists = await this.listRepository.findListsSortedByPosition(boardId);
+        const templateLists = lists.map(list => ({
+            title: list.title,
+            position: parseFloat(list.position) // Convert string position to number for template
+        }));
+
+        return await this.boardTemplateRepository.createWithLists({
+            name: data.name,
+            description: data.description ?? `Template created from board: ${board.title}`,
+            coverUrl: board.coverUrl ?? null,
+            type: BoardTemplateType.CUSTOM
+        }, templateLists);
     }
 
     // get board with visibility is public
@@ -49,6 +154,14 @@ export default class BoardService {
         const board = await this.boardRepository.findPublicBoardById(id);
         if (!board) {
             throw new NotFoundError(`Board with ID ${id} not found`);
+        }
+        return toBoardResponse(board);
+    }
+
+    async getBoardById(id: string): Promise<BoardResponse> {
+        const board = await this.boardRepository.findById(id);
+        if (!board) {
+            throw new NotFoundError(`Board with id ${id} not found`);
         }
         return toBoardResponse(board);
     }
@@ -112,14 +225,12 @@ export default class BoardService {
 
                 // Create Default Lists
                 if (template.lists) {
-                    const listRepo = this.dataSource.getRepository(List);
                     const listPromises = template.lists.map(async (list: any) => {
-                        const newList = listRepo.create({
+                        await this.listRepository.create({
                             title: list.title,
                             position: list.position,
-                            board: board
+                            boardId: board.id
                         });
-                        await listRepo.save(newList);
                     });
                     await Promise.all(listPromises);
                 }
@@ -367,6 +478,7 @@ export default class BoardService {
             };
         }
     }
+
 
     getBoardMembers = async (boardId: string): Promise<any[]> => {
         const board = await this.boardRepository.findById(boardId);

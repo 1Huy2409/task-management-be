@@ -16,10 +16,10 @@ export class BoardTemplate extends DateTimeEntity {
     name: string
 
     @Column({ type: 'text', nullable: true })
-    description: string
+    description: string | null
 
     @Column({ type: 'varchar', length: 255, nullable: true })
-    coverUrl: string
+    coverUrl: string | null
 
     @Column({ type: 'enum', enum: BoardTemplateType, default: BoardTemplateType.SYSTEM })
     type: BoardTemplateType

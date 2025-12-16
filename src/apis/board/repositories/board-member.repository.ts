@@ -37,7 +37,11 @@ export class BoardMemberRepository implements IBoardMemberRepository {
         return this.boardMemberRepository.save(member);
     }
 
-    async delete(member: BoardMember): Promise<void> {
-        await this.boardMemberRepository.remove(member);
+    async update(id: string, member: Partial<BoardMember>): Promise<void> {
+        await this.boardMemberRepository.update(id, member);
+    }
+
+    async delete(id: string): Promise<void> {
+        await this.boardMemberRepository.delete(id);
     }
 }

@@ -15,6 +15,7 @@ export const PERMISSIONS = {
     BOARD_DELETE: 'board:delete',
     BOARD_MANAGE_MEMBERS: 'board:manage_members',
     BOARD_VIEW_MEMBERS: 'board:view_members',
+    BOARD_MANAGE_ROLES: 'board:manage_roles',
 
     // List permissions
     LIST_VIEW: 'list:view',

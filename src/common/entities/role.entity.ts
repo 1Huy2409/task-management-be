@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
 import { DateTimeEntity } from "./base/date-time.entity";
 import { WorkspaceMember } from "./workspace-member.entity";
+import { Board } from "./board.entity";
 import { BoardMember } from "./board-member.entity";
 import { RolePermission } from "./role-permission.entity";
 import { Workspace } from "./workspace.entity";
@@ -43,4 +44,12 @@ export class Role extends DateTimeEntity {
     @ManyToOne(() => Workspace, { nullable: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'workspaceId' })
     workspace: Workspace | null;
+
+    @Column({ type: 'uuid', nullable: true })
+    boardId: string | null;
+
+    
+    @ManyToOne('Board', { nullable: true, onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'boardId' })
+    board: Board | null;
 }

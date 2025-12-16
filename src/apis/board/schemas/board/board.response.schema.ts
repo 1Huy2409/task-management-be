@@ -29,6 +29,16 @@ export const BoardTemplateSchema = z.object({
     updatedAt: z.date().openapi({ example: new Date() })
 })
 
+export const BoardTemplateListSchema = z.object({
+    id: z.string().uuid().openapi({ example: '123e4567-e89b-12d3-a456-426614174000' }),
+    title: z.string().openapi({ example: 'To Do' }),
+    position: z.number().openapi({ example: 1000 })
+});
+
+export const BoardTemplateDetailSchema = BoardTemplateSchema.extend({
+    lists: z.array(BoardTemplateListSchema)
+});
+
 export const ListBoardTemplateSchema = z.array(BoardTemplateSchema);
 ;
 export type ListBoardResponse = z.infer<typeof ListBoardResponseSchema>;

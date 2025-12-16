@@ -7,6 +7,8 @@ export interface IRoleRepository {
     findByNameAndWorkspaceId(name: string, scope: RoleScope, workspaceId: string): Promise<Role | null>;
     findByScopeAndWorkspaceId(scope: RoleScope, workspaceId: string | null): Promise<Role[]>;
     findWorkspaceRoles(workspaceId: string): Promise<Role[]>;
+    findBoardRoles(boardId: string): Promise<Role[]>;
+    findByNameAndBoardId(name: string, scope: RoleScope, boardId: string): Promise<Role | null>;
     create(roleData: Partial<Role>): Role;
     save(role: Role): Promise<Role>;
     delete(roleId: string): Promise<void>;
