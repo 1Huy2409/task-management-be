@@ -18,7 +18,7 @@ import { WorkspaceMember } from '../entities/workspace-member.entity'
 import { Board } from '../entities/board.entity'
 import { BoardMember } from '../entities/board-member.entity'
 import { BoardJoinLink } from '../entities/board-join-link.entity'
-import { BoardTemplate } from '../entities/board-template.entity'
+
 import BoardService from '@/apis/board/board.service'
 import { BoardRoleService } from '@/apis/board/board-role.service'
 import BoardController from '@/apis/board/board.controller'
@@ -30,7 +30,7 @@ import { WorkspaceMemberRepository } from '@/apis/workspace/repositories/workspa
 import { BoardRepository } from '@/apis/board/repositories/board.repository'
 import { BoardMemberRepository } from '@/apis/board/repositories/board-member.repository'
 import { BoardJoinLinkRepository } from '@/apis/board/repositories/board-join-link.repository'
-import { BoardTemplateRepository } from '@/apis/board/repositories/board-template.repository'
+
 import { RoleRepository } from '@/apis/role/repositories/role.repository'
 import { WorkspaceJoinLink } from '../entities/workspace-join-link.entity'
 import { JoinLinkRepository } from '@/apis/joinlink/repositories/join-link.repository'
@@ -124,8 +124,7 @@ const initBoardModule = () => {
     const boardJoinLinkRepository = new BoardJoinLinkRepository(boardJoinLinkOrmRepo);
     const boardMemberOrmRepo = AppDataSource.getRepository(BoardMember);
     const boardMemberRepository = new BoardMemberRepository(boardMemberOrmRepo);
-    const boardTemplateOrmRepo = AppDataSource.getRepository(BoardTemplate);
-    const boardTemplateRepository = new BoardTemplateRepository(boardTemplateOrmRepo);
+
     const roleOrmRepo = AppDataSource.getRepository(Role);
     const roleRepository = new RoleRepository(roleOrmRepo);
 
@@ -147,7 +146,6 @@ const initBoardModule = () => {
         boardMemberRepository,
         roleRepository,
         userRepository,
-        boardTemplateRepository,
         AppDataSource,
         listRepository,
         rbacService

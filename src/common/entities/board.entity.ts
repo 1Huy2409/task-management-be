@@ -38,6 +38,9 @@ export class Board extends DateTimeEntity {
     @Column({ type: 'boolean', default: true })
     isActive: boolean;
 
+    @Column({ type: 'boolean', default: false })
+    isTemplate: boolean;
+
     @Column({ type: 'uuid' })
     ownerId: string;
 

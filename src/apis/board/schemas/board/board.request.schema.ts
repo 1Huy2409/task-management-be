@@ -9,6 +9,10 @@ export const CreateBoardSchema = z.object({
     coverUrl: z.url().min(10).max(255).optional().openapi({ description: 'Cover image URL of the board', example: 'https://example.com/cover.jpg' }),
     visibility: z.enum(BoardVisibility).optional().default(BoardVisibility.WORKSPACE).openapi({ description: 'Visibility of the board', example: BoardVisibility.WORKSPACE }),
     templateId: z.string().uuid().optional().openapi({ description: 'ID of the template to use for the board', example: '123e4567-e89b-12d3-a456-426614174000' }),
+    lists: z.array(z.object({
+        title: z.string().min(1).openapi({ example: 'To Do' }),
+        position: z.number().optional().openapi({ example: 1000 })
+    })).optional().openapi({ description: 'Initial lists for the board/template', example: [{ title: 'To Do', position: 10000 }] })
 })
 export const PostBoardRequest: ZodRequestBody = {
     description: 'Create new board',
@@ -58,9 +62,41 @@ export const PostBoardWithWorkspaceRequest: ZodRequestBody = {
     }
 }
 
+export const CreateTemplateFromBoardSchema = z.object({
+    name: z.string().min(1).max(255).openapi({ description: 'Name of the new template', example: 'Template from Project Alpha' })
+});
+
+export const PostCreateTemplateFromBoardRequest: ZodRequestBody = {
+    description: 'Create template from existing board',
+    content: {
+        'application/json': {
+            schema: CreateTemplateFromBoardSchema
+        }
+    }
+};
+
+export const PostBoardTemplateRequest: ZodRequestBody = {
+    description: 'Create new board template',
+    content: {
+        'application/json': {
+            schema: CreateBoardWithWorkspaceSchema.openapi({
+                example: {
+                    title: 'New Template',
+                    description: 'Template description',
+                    coverUrl: 'https://example.com/cover.jpg',
+                    visibility: BoardVisibility.WORKSPACE,
+                    workspaceId: '123e4567-e89b-12d3-a456-426614174111',
+                    lists: [{ title: 'To Do', position: 1000 }]
+                }
+            })
+        }
+    }
+};
+
 export type CreateBoardSchema = z.infer<typeof CreateBoardSchema>;
 export type UpdateBoardSchema = z.infer<typeof UpdateBoardSchema>;
 export type CreateBoardWithWorkspaceSchema = z.infer<typeof CreateBoardWithWorkspaceSchema>;
 export type PostBoardRequest = z.infer<typeof CreateBoardSchema>;
 export type PatchBoardRequest = z.infer<typeof UpdateBoardSchema>;
 export type PostBoardWithWorkspaceRequest = z.infer<typeof CreateBoardWithWorkspaceSchema>;
+export type CreateTemplateFromBoardSchema = z.infer<typeof CreateTemplateFromBoardSchema>;

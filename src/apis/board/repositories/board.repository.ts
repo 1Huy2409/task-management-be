@@ -26,6 +26,12 @@ export class BoardRepository implements IBoardRepository {
         });
     }
 
+    async findTemplates(): Promise<Board[]> {
+        return await this.boardRepository.find({
+            where: { isTemplate: true, status: BoardStatus.ACTIVE }
+        });
+    }
+
     async findPublicBoardById(id: string): Promise<Board | null> {
         return await this.boardRepository.findOne({
             where: { id, visibility: BoardVisibility.PUBLIC, status: BoardStatus.ACTIVE }

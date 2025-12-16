@@ -27,7 +27,7 @@ import { checkAuthentication } from "@/common/middleware/authentication";
 import { checkBoardPermission, checkWorkspacePermission } from "@/common/middleware/authorization";
 import { PERMISSIONS } from "@/common/constants/permissions";
 import { CopyListRequest, MoveListRequest, PostListRequest, ReorderListRequest } from "../list/schemas/list.request.schema";
-import { PostBoardTemplateRequest, PostCreateTemplateFromBoardRequest } from "./schemas/board-template/board-template.request.schema";
+import { PostBoardTemplateRequest, PostCreateTemplateFromBoardRequest } from "./schemas/board/board.request.schema";
 
 export const boardRegistry = new OpenAPIRegistry()
 boardRegistry.register('Board', BoardResponseSchema)

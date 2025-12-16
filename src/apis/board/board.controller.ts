@@ -310,8 +310,10 @@ export default class BoardController {
     }
 
     createTemplate = async (req: Request, res: Response) => {
+        const userId = req.user?.id;
+        if (!userId) throw new AuthFailureError('Authentication failure');
         const data = req.body;
-        const template = await this.boardService.createTemplate(data);
+        const template = await this.boardService.createTemplate(data, userId);
         const serviceResponse = new ServiceResponse(
             ResponseStatus.Sucess,
             'Create board template successfully',
@@ -322,9 +324,11 @@ export default class BoardController {
     }
 
     createTemplateFromBoard = async (req: Request, res: Response) => {
+        const userId = req.user?.id;
+        if (!userId) throw new AuthFailureError('Authentication failure');
         const { boardId } = req.params;
         const data = req.body;
-        const template = await this.boardService.createTemplateFromBoard(boardId as string, data);
+        const template = await this.boardService.createTemplateFromBoard(boardId as string, data.name, userId);
         const serviceResponse = new ServiceResponse(
             ResponseStatus.Sucess,
             'Create template from board successfully',

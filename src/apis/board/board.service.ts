@@ -1,5 +1,5 @@
+
 import { BoardResponse, CreateBoardSchema, UpdateBoardSchema, CreateBoardJoinLinkDto, BoardJoinLinkResponse, InviteByEmailDto } from "./schemas";
-import { CreateBoardTemplateDto, CreateBoardTemplateFromBoardDto } from "./schemas/board-template/board-template.request.schema";
 import { NotFoundError, ConflictRequestError, BadRequestError } from "@/common/handler/error.response";
 import { toBoardResponse } from "./mapper/board.mapper";
 import { toBoardJoinLinkResponse } from "./mapper/board-join-link.mapper";
@@ -13,8 +13,6 @@ import { BoardVisibility } from '@/common/entities/board.entity';
 import { BoardJoinLink } from "@/common/entities/board-join-link.entity";
 import { RoleScope } from "@/common/entities/role.entity";
 import { nanoid } from "nanoid";
-import { BoardTemplate, BoardTemplateType } from "@/common/entities/board-template.entity";
-import { IBoardTemplateRepository } from "./repositories/board-template.repository.interface";
 import { EmailService } from "@/common/utils/mailService";
 import { DataSource } from "typeorm";
 import { IListRepository } from "../list/repositories/list.repository.interface";
@@ -32,7 +30,6 @@ export default class BoardService {
         private boardMemberRepository: IBoardMemberRepository,
         private roleRepository: IRoleRepository,
         private userRepository: IUserRepository,
-        private boardTemplateRepository: IBoardTemplateRepository,
         private dataSource: DataSource,
         private listRepository: IListRepository,
         private rbacService: RbacService
@@ -61,7 +58,7 @@ export default class BoardService {
             throw new BadRequestError('Role is not a board role');
         }
 
-        console.log(`Updating role for user ${userId} in board ${boardId} to role ${roleId}`);
+        console.log(`Updating role for user ${userId} in board ${boardId} to role ${roleId} `);
         // Clear relation to avoid conflicts, precise update using roleId
         member.roleId = roleId;
         // member.role = undefined as any; // Optional: force TypeORM to reload or ignore relation
@@ -95,51 +92,82 @@ export default class BoardService {
         await this.rbacService.onUserRemovedFromBoard(userId, boardId);
     }
 
-    getAllTemplates = async () => {
-        return await this.boardTemplateRepository.findAll();
+    getAllTemplates = async (): Promise<BoardResponse[]> => {
+        // Find boards marked as templates
+        // We need to add findTemplates to IBoardRepository or use existing find with where CLAUSE if available exposed
+        // For now Assuming IBoardRepository needs update or we use existing methods
+        // Let's assume we will add findTemplates() to repository
+        // Or reuse findPublicBoards if we reused logic? No.
+        // I will implement findTemplates in repository later.
+        const templates = await this.boardRepository.findTemplates();
+        return templates.map(toBoardResponse);
     }
 
-    getTemplateById = async (id: string): Promise<BoardTemplate> => {
-        const template = await this.boardTemplateRepository.findByIdWithLists(id);
-        if (!template) {
+    getTemplateById = async (id: string): Promise<BoardResponse> => {
+        const template = await this.boardRepository.findById(id);
+        if (!template || !template.isTemplate) {
             throw new NotFoundError(`Board template with ID ${id} not found`);
         }
-        return template;
+        return toBoardResponse(template);
     }
 
-    createTemplate = async (data: CreateBoardTemplateDto): Promise<BoardTemplate> => {
-        // Calculate positions if not provided
-        const listsWithPositions = data.lists?.map((list, index) => ({
-            title: list.title,
-            position: list.position ?? (index + 1) * 1024
-        })) || [];
+    createTemplate = async (data: CreateBoardSchema & { workspaceId: string }, userId: string): Promise<BoardResponse> => {
+        const board = await this.boardRepository.create({
+            title: data.title,
+            description: data.description ?? '',
+            coverUrl: data.coverUrl ?? '',
+            visibility: data.visibility || BoardVisibility.PRIVATE, // Templates usually private to workspace?
+            workspaceId: data.workspaceId,
+            ownerId: userId,
+            createdBy: userId,
+            isTemplate: true
+        } as any); // cast to any to allow isTemplate until interface updated or entity updated reflected
 
-        return await this.boardTemplateRepository.createWithLists({
-            name: data.name,
-            description: data.description ?? null,
-            coverUrl: data.coverUrl ?? null,
-            type: BoardTemplateType.CUSTOM
-        }, listsWithPositions);
+        // If lists are provided, create them
+        if (data.lists && data.lists.length > 0) {
+            const listPromises = data.lists.map(async (list, index) => {
+                await this.listRepository.create({
+                    title: list.title,
+                    position: (list.position ?? (index + 1) * 10000).toString(),
+                    boardId: board.id
+                });
+            });
+            await Promise.all(listPromises);
+        }
+
+        return toBoardResponse(board);
     }
 
-    createTemplateFromBoard = async (boardId: string, data: CreateBoardTemplateFromBoardDto): Promise<BoardTemplate> => {
-        const board = await this.boardRepository.findById(boardId);
-        if (!board) {
+    createTemplateFromBoard = async (boardId: string, name: string, userId: string): Promise<BoardResponse> => {
+        const sourceBoard = await this.boardRepository.findById(boardId);
+        if (!sourceBoard) {
             throw new NotFoundError(`Board with ID ${boardId} not found`);
         }
 
-        const lists = await this.listRepository.findListsSortedByPosition(boardId);
-        const templateLists = lists.map(list => ({
-            title: list.title,
-            position: parseFloat(list.position) // Convert string position to number for template
-        }));
+        const template = await this.boardRepository.create({
+            title: name,
+            description: `Template from ${sourceBoard.title} `,
+            coverUrl: sourceBoard.coverUrl,
+            visibility: BoardVisibility.PRIVATE,
+            workspaceId: sourceBoard.workspaceId,
+            ownerId: userId,
+            createdBy: userId,
+            isTemplate: true
+        } as any);
 
-        return await this.boardTemplateRepository.createWithLists({
-            name: data.name,
-            description: data.description ?? `Template created from board: ${board.title}`,
-            coverUrl: board.coverUrl ?? null,
-            type: BoardTemplateType.CUSTOM
-        }, templateLists);
+        // Copy lists
+        const lists = await this.listRepository.findListsSortedByPosition(boardId);
+        for (const list of lists) {
+            await this.listRepository.create({
+                title: list.title,
+                position: list.position,
+                boardId: template.id
+            });
+            // potentially copy cards too? User just said "snapshot board to template" in previous tasks
+            // For now lists is enough based on previous implementation
+        }
+
+        return toBoardResponse(template);
     }
 
     // get board with visibility is public
@@ -213,8 +241,8 @@ export default class BoardService {
 
         // Apply Template Metadata & Create Lists
         if (data.templateId) {
-            const template = await this.boardTemplateRepository.findByIdWithLists(data.templateId);
-            if (template) {
+            const template = await this.boardRepository.findById(data.templateId);
+            if (template) { // Optionally check isTemplate field?
                 if (!data.description && template.description) {
                     board.description = template.description;
                 }
@@ -223,12 +251,15 @@ export default class BoardService {
                 }
                 await this.boardRepository.save(board);
 
-                // Create Default Lists
-                if (template.lists) {
-                    const listPromises = template.lists.map(async (list: any) => {
+                // Create Default Lists from Template Board
+                // Use listRepository to find lists of the template board
+                const templateLists = await this.listRepository.findListsSortedByPosition(template.id);
+
+                if (templateLists.length > 0) {
+                    const listPromises = templateLists.map(async (list) => {
                         await this.listRepository.create({
                             title: list.title,
-                            position: list.position,
+                            position: list.position, // Keep as string
                             boardId: board.id
                         });
                     });
@@ -412,7 +443,7 @@ export default class BoardService {
 
             // Send notification email for existing user
             try {
-                const boardLink = `${process.env.FRONTEND_BASE_URL || 'http://localhost:3000'}/boards/${boardId}`;
+                const boardLink = `${process.env.FRONTEND_BASE_URL || 'http://localhost:3000'} /boards/${boardId} `;
                 await this.emailService.sendBoardInvitation(
                     data.email,
                     board.title,
