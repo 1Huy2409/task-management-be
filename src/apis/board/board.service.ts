@@ -93,12 +93,7 @@ export default class BoardService {
     }
 
     getAllTemplates = async (): Promise<BoardResponse[]> => {
-        // Find boards marked as templates
-        // We need to add findTemplates to IBoardRepository or use existing find with where CLAUSE if available exposed
-        // For now Assuming IBoardRepository needs update or we use existing methods
-        // Let's assume we will add findTemplates() to repository
-        // Or reuse findPublicBoards if we reused logic? No.
-        // I will implement findTemplates in repository later.
+ 
         const templates = await this.boardRepository.findTemplates();
         return templates.map(toBoardResponse);
     }
@@ -116,12 +111,12 @@ export default class BoardService {
             title: data.title,
             description: data.description ?? '',
             coverUrl: data.coverUrl ?? '',
-            visibility: data.visibility || BoardVisibility.PRIVATE, // Templates usually private to workspace?
+            visibility: data.visibility || BoardVisibility.PRIVATE, 
             workspaceId: data.workspaceId,
             ownerId: userId,
             createdBy: userId,
             isTemplate: true
-        } as any); // cast to any to allow isTemplate until interface updated or entity updated reflected
+        } as any); 
 
         // If lists are provided, create them
         if (data.lists && data.lists.length > 0) {
@@ -163,8 +158,7 @@ export default class BoardService {
                 position: list.position,
                 boardId: template.id
             });
-            // potentially copy cards too? User just said "snapshot board to template" in previous tasks
-            // For now lists is enough based on previous implementation
+            
         }
 
         return toBoardResponse(template);
@@ -259,7 +253,7 @@ export default class BoardService {
                     const listPromises = templateLists.map(async (list) => {
                         await this.listRepository.create({
                             title: list.title,
-                            position: list.position, // Keep as string
+                            position: list.position, 
                             boardId: board.id
                         });
                     });
