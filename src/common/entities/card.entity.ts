@@ -3,6 +3,7 @@ import { DateTimeEntity } from "./base/date-time.entity";
 import { List } from "./list.entity";
 import { Comment } from "./comment.entity";
 import { CardMember } from "./card-member.entity";
+import { Checklist } from "./checklist.entity";
 
 @Entity('cards')
 export class Card extends DateTimeEntity {
@@ -32,6 +33,9 @@ export class Card extends DateTimeEntity {
 
     @OneToMany(() => CardMember, (cardMember) => cardMember.card)
     cardMembers: CardMember[]
+
+    @OneToMany(() => Checklist, (checklist) => checklist.card)
+    checklists: Checklist[]
 
     @Column({ type: 'uuid' })
     listId: string

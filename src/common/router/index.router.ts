@@ -53,6 +53,20 @@ import { ListRepository } from '@/apis/list/repositories/list.repository'
 import ListController from '@/apis/list/list.controller'
 import listRouter from '@/apis/list/list.router'
 import { registerListPaths } from '@/apis/list/list.openapi'
+import CardService from '@/apis/card/card.service';
+import CardController from '@/apis/card/card.controller';
+import cardRouter from '@/apis/card/card.router';
+import { CardMember } from '../entities/card-member.entity';
+import { CardMemberRepository } from '@/apis/card/repositories/card-member.repository';
+import { Checklist } from '@/common/entities/checklist.entity';
+import { ChecklistRepository } from '@/apis/checklist/repositories/checklist.repository';
+import { ChecklistItem } from '@/common/entities/checklist-item.entity';
+import { ChecklistItemRepository } from '@/apis/checklist/repositories/checklist-item.repository';
+import ChecklistService from '@/apis/checklist/checklist.service';
+import ChecklistController from '@/apis/checklist/checklist.controller';
+import checklistRouter from '@/apis/checklist/checklist.router';
+import { registerCardPaths } from '@/apis/card/card.openapi';
+import { registerChecklistPaths } from '@/apis/checklist/checklist.openapi';
 
 const mainRouter: Router = express.Router()
 const initHealthCheckModule = () => {
@@ -184,4 +198,34 @@ initWorkspaceModule();
 initJoinLinkModule();
 initBoardModule();
 initListModule();
+const initCardModule = () => {
+    const cardOrmRepo = AppDataSource.getRepository(Card);
+    const cardRepository = new CardRepository(cardOrmRepo);
+    const listOrmRepo = AppDataSource.getRepository(List);
+    const listRepository = new ListRepository(listOrmRepo);
+    const cardMemberOrmRepo = AppDataSource.getRepository(CardMember);
+    const cardMemberRepository = new CardMemberRepository(cardMemberOrmRepo);
+    const boardMemberOrmRepo = AppDataSource.getRepository(BoardMember);
+    const boardMemberRepository = new BoardMemberRepository(boardMemberOrmRepo);
+    const cardService = new CardService(cardRepository, listRepository, cardMemberRepository, boardMemberRepository, AppDataSource);
+    const cardController = new CardController(cardService);
+    registerCardPaths();
+    mainRouter.use('/cards', cardRouter(cardController));
+}
+initCardModule();
+
+const initChecklistModule = () => {
+    const checklistOrmRepo = AppDataSource.getRepository(Checklist);
+    const checklistRepository = new ChecklistRepository(checklistOrmRepo);
+    const checklistItemOrmRepo = AppDataSource.getRepository(ChecklistItem);
+    const checklistItemRepository = new ChecklistItemRepository(checklistItemOrmRepo);
+    const cardOrmRepo = AppDataSource.getRepository(Card);
+    const cardRepository = new CardRepository(cardOrmRepo);
+
+    const checklistService = new ChecklistService(checklistRepository, checklistItemRepository, cardRepository);
+    const checklistController = new ChecklistController(checklistService);
+    registerChecklistPaths();
+    mainRouter.use('/checklists', checklistRouter(checklistController));
+}
+initChecklistModule();
 export default mainRouter;
