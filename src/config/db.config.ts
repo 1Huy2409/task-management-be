@@ -14,6 +14,8 @@ import { BoardJoinLink } from "../common/entities/board-join-link.entity";
 import { Role } from "../common/entities/role.entity";
 import { Permission } from "../common/entities/permission.entity";
 import { RolePermission } from "../common/entities/role-permission.entity";
+import { Checklist } from "../common/entities/checklist.entity";
+import { ChecklistItem } from "../common/entities/checklist-item.entity";
 import { config } from "dotenv";
 import { WorkspaceJoinLink } from "../common/entities/workspace-join-link.entity";
 
@@ -31,7 +33,8 @@ export const AppDataSource = new DataSource({
     logging: true,
     entities: [
         User, Workspace, WorkspaceMember, Notification, List, Comment, Card, CardMember,
-        Board, BoardMember, BoardJoinLink, Role, Permission, RolePermission, WorkspaceJoinLink
+        Board, BoardMember, BoardJoinLink, Role, Permission, RolePermission, WorkspaceJoinLink,
+        Checklist, ChecklistItem
     ],
     migrations: [path.join(__dirname, '../common/migrations/*.{ts,js}')],
     migrationsRun: false

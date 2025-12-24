@@ -211,3 +211,32 @@ Remove an item from a checklist.
 - **Permission**: `card:update`
 - **Response**: `200 OK`
 
+
+## Setup & Run Instructions
+
+After pulling this code, follow these steps to get the backend running with the new Card & Checklist features:
+
+1.  **Install Dependencies**:
+    ```bash
+    npm install
+    ```
+
+2.  **Environment Variables**:
+    Ensure your `.env` file is configured (Database, JWT, Redis, etc.).
+
+3.  **Run Migrations**:
+    Apply the database schema changes for Cards and Checklists.
+    ```bash
+    npm run migration:run
+    ```
+
+4.  **Start Server**:
+    ```bash
+    npm run dev
+    ```
+
+5.  **Verify**:
+    - Access Swagger Documentation: `http://localhost:8000/api-docs`
+    - Run Verification Tests: `npm run test src/apis/card/card.flow.test.ts`
+
+
