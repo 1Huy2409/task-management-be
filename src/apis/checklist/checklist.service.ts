@@ -1,4 +1,4 @@
-import { NotFoundError } from "@/common/handler/error.response";
+import { BadRequestError, NotFoundError } from "@/common/handler/error.response";
 import { IChecklistRepository } from "./repositories/checklist.repository.interface";
 import { IChecklistItemRepository } from "./repositories/checklist-item.repository.interface";
 import { CreateChecklistItemSchema, CreateChecklistSchema, UpdateChecklistItemSchema, UpdateChecklistSchema } from "./schemas/checklist.request.schema";
@@ -60,6 +60,9 @@ export default class ChecklistService {
     }
 
     createItem = async (data: CreateChecklistItemSchema): Promise<ChecklistItemResponseSchema> => {
+        if (!data.checklistId) {
+            throw new BadRequestError('Checklist ID is required');
+        }
         const checklist = await this.checklistRepository.findById(data.checklistId);
         if (!checklist) {
             throw new NotFoundError(`Checklist with ID ${data.checklistId} not found`);

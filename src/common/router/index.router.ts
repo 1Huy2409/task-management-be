@@ -65,6 +65,8 @@ import { ChecklistItemRepository } from '@/apis/checklist/repositories/checklist
 import ChecklistService from '@/apis/checklist/checklist.service';
 import ChecklistController from '@/apis/checklist/checklist.controller';
 import checklistRouter from '@/apis/checklist/checklist.router';
+import { registerCardPaths } from '@/apis/card/card.openapi';
+import { registerChecklistPaths } from '@/apis/checklist/checklist.openapi';
 
 const mainRouter: Router = express.Router()
 const initHealthCheckModule = () => {
@@ -207,6 +209,7 @@ const initCardModule = () => {
     const boardMemberRepository = new BoardMemberRepository(boardMemberOrmRepo);
     const cardService = new CardService(cardRepository, listRepository, cardMemberRepository, boardMemberRepository, AppDataSource);
     const cardController = new CardController(cardService);
+    registerCardPaths();
     mainRouter.use('/cards', cardRouter(cardController));
 }
 initCardModule();
@@ -221,6 +224,7 @@ const initChecklistModule = () => {
 
     const checklistService = new ChecklistService(checklistRepository, checklistItemRepository, cardRepository);
     const checklistController = new ChecklistController(checklistService);
+    registerChecklistPaths();
     mainRouter.use('/checklists', checklistRouter(checklistController));
 }
 initChecklistModule();
