@@ -7,11 +7,17 @@ import { IListRepository } from "../list/repositories/list.repository.interface"
 import { POSITION_INCREMENT } from "@/common/utils/positionCalculator";
 import { DataSource } from "typeorm";
 import { Card } from "@/common/entities/card.entity";
+import { ICardMemberRepository } from "./repositories/card-member.repository.interface";
+import { IBoardMemberRepository } from "../board/repositories/board-member.repository.interface";
+import { User } from "@/common/entities/user.entity";
+import { BadRequestError } from "@/common/handler/error.response";
 
 export default class CardService {
     constructor(
         private cardRepository: ICardRepository,
         private listRepository: IListRepository,
+        private cardMemberRepository: ICardMemberRepository,
+        private boardMemberRepository: IBoardMemberRepository,
         private dataSource: DataSource
     ) { }
 
@@ -117,5 +123,35 @@ export default class CardService {
         if (!deleted) {
             throw new NotFoundError(`Card with ID ${id} not found`);
         }
+    }
+
+    assignMember = async (cardId: string, userId: string): Promise<void> => {
+        const card = await this.cardRepository.findByIdWithList(cardId);
+        if (!card) throw new NotFoundError(`Card with ID ${cardId} not found`);
+        if (!card.list) throw new NotFoundError(`List for card ${cardId} not found`);
+
+        const isBoardMember = await this.boardMemberRepository.findByBoardAndUserId(card.list.boardId, userId);
+        if (!isBoardMember) {
+            throw new BadRequestError('User is not a member of the board');
+        }
+
+        const existingMember = await this.cardMemberRepository.findByCardAndUserId(cardId, userId);
+        if (existingMember) {
+            throw new BadRequestError('User is already a member of this card');
+        }
+
+        await this.cardMemberRepository.create({
+            card: card,
+            user: { id: userId } as User,
+            role: 1 // Default role
+        });
+    }
+
+    removeMember = async (cardId: string, userId: string): Promise<void> => {
+        const member = await this.cardMemberRepository.findByCardAndUserId(cardId, userId);
+        if (!member) {
+            throw new NotFoundError('User is not a member of this card');
+        }
+        await this.cardMemberRepository.delete(member.id);
     }
 }

@@ -89,4 +89,35 @@ export default class CardController {
         );
         return handleServiceResponse(serviceResponse, res);
     }
+
+    assignMember = async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const { userId } = req.body;
+        if (!id) throw new BadRequestError('Card ID is required');
+        if (!userId) throw new BadRequestError('User ID is required');
+
+        await this.cardService.assignMember(id, userId);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Assign member successfully',
+            null,
+            StatusCodes.OK
+        );
+        return handleServiceResponse(serviceResponse, res);
+    }
+
+    removeMember = async (req: Request, res: Response) => {
+        const { id, userId } = req.params;
+        if (!id) throw new BadRequestError('Card ID is required');
+        if (!userId) throw new BadRequestError('User ID is required');
+
+        await this.cardService.removeMember(id, userId);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Remove member successfully',
+            null,
+            StatusCodes.OK
+        );
+        return handleServiceResponse(serviceResponse, res);
+    }
 }

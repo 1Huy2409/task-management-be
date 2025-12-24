@@ -80,7 +80,22 @@ Update card details, including moving to another list or reordering.
 ```
 - **Response**: `200 OK`
 
-### 5. Delete Card
+### 5. Reorder Card (Move Card)
+Change position of a card or move it to another list.
+
+- **URL**: `PATCH /cards/:id`
+- **Auth**: Required
+- **Permission**: `card:update`
+- **Body**:
+```json
+{
+  "listId": "uuid-of-target-list", // Optional: Move to another list
+  "position": 5000.5 // Optional: New position (decimal allowed for insertion)
+}
+```
+- **Response**: `200 OK`
+
+### 6. Delete Card
 Remove a card permanently.
 
 - **URL**: `DELETE /cards/:id`
@@ -88,7 +103,45 @@ Remove a card permanently.
 - **Permission**: `card:delete`
 - **Response**: `200 OK`
 
-## Testing (cURL Examples)
+## Reorder Mechanism (Fractional Indexing)
+
+The system uses **Fractional Indexing** to determine the order of cards. The `position` field is a decimal number (float).
+When moving a card, the frontend should calculate the new position based on the surrounding cards and send it to the `PATCH /cards/:id` API.
+
+**Formula:**
+- **Insert between A and B**: `newIdentifier = (positionA + positionB) / 2`
+- **Insert at top**: `newIdentifier = positionFirst / 2`
+- **Insert at bottom**: `newIdentifier = positionLast + 1000` (or any increment)
+
+**Example:**
+Existing positions: `[1000, 2000, 3000]`
+- Move to top: `1000 / 2 = 500`
+- Move between 1000 and 2000: `(1000 + 2000) / 2 = 1500`
+- Move to bottom: `3000 + 1000 = 4000`
+
+
+### 6. Assign Member
+Assign a user to a card.
+
+- **URL**: `POST /cards/:id/members`
+- **Auth**: Required
+- **Permission**: `card:assign`
+- **Body**:
+```json
+{
+  "userId": "uuid-of-user"
+}
+```
+- **Response**: `200 OK`
+
+### 7. Remove Member
+Remove a user from a card.
+
+- **URL**: `DELETE /cards/:id/members/:userId`
+- **Auth**: Required
+- **Permission**: `card:assign`
+- **Response**: `200 OK`
+
 
 **Create:**
 ```bash
@@ -98,8 +151,63 @@ curl -X POST http://localhost:3000/api/v1/cards \
   -d '{"title": "Test Card", "listId": "YOUR_LIST_ID"}'
 ```
 
-**Get All:**
-```bash
-curl -X GET "http://localhost:3000/api/v1/cards?listId=YOUR_LIST_ID" \
-  -H "Authorization: Bearer YOUR_TOKEN"
+### 8. Create Checklist
+Create a new checklist in a card.
+
+- **URL**: `POST /checklists`
+- **Auth**: Required
+- **Permission**: `card:update`
+- **Body**:
+```json
+{
+  "title": "To Do",
+  "cardId": "uuid-of-card"
+}
 ```
+- **Response**: `201 Created`
+
+### 9. Delete Checklist
+Delete a checklist.
+
+- **URL**: `DELETE /checklists/:id`
+- **Auth**: Required
+- **Permission**: `card:update`
+- **Response**: `200 OK`
+
+### 10. Create Checklist Item
+Add an item to a checklist.
+
+- **URL**: `POST /checklists/:id/items`
+- **Auth**: Required
+- **Permission**: `card:update`
+- **Body**:
+```json
+{
+  "title": "Buy milk"
+}
+```
+- **Response**: `201 Created`
+
+### 11. Update Checklist Item
+Update item details (e.g., toggle check, rename).
+
+- **URL**: `PATCH /checklists/items/:id`
+- **Auth**: Required
+- **Permission**: `card:update`
+- **Body**:
+```json
+{
+  "title": "Buy almond milk",
+  "isChecked": true
+}
+```
+- **Response**: `200 OK`
+
+### 12. Delete Checklist Item
+Remove an item from a checklist.
+
+- **URL**: `DELETE /checklists/items/:id`
+- **Auth**: Required
+- **Permission**: `card:update`
+- **Response**: `200 OK`
+

@@ -38,5 +38,17 @@ export default function cardRouter(cardController: CardController): Router {
         asyncHandler(cardController.deleteCard)
     );
 
+    router.post('/:id/members',
+        asyncHandler(checkAuthentication),
+        asyncHandler(checkCardPermission(PERMISSIONS.CARD_ASSIGN)),
+        asyncHandler(cardController.assignMember)
+    );
+
+    router.delete('/:id/members/:userId',
+        asyncHandler(checkAuthentication),
+        asyncHandler(checkCardPermission(PERMISSIONS.CARD_ASSIGN)),
+        asyncHandler(cardController.removeMember)
+    );
+
     return router;
 }
