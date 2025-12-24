@@ -15,6 +15,7 @@ export class List extends DateTimeEntity {
         type: 'numeric',
         precision: 20,
         scale: 10,
+        default: 0
     })
     position: string;
 

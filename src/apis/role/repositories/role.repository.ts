@@ -45,6 +45,22 @@ export class RoleRepository implements IRoleRepository {
         });
     }
 
+    async findBoardRoles(boardId: string): Promise<Role[]> {
+        return await this.roleRepository.find({
+            where: [
+                { scope: RoleScope.BOARD, boardId: null as any }, 
+                { scope: RoleScope.BOARD, boardId },
+            ],
+            relations: ["rolePermissions", "rolePermissions.permission"],
+        });
+    }
+
+    async findByNameAndBoardId(name: string, scope: RoleScope, boardId: string): Promise<Role | null> {
+        return await this.roleRepository.findOne({
+            where: { name, scope, boardId },
+        });
+    }
+
     create(roleData: Partial<Role>): Role {
         return this.roleRepository.create(roleData);
     }

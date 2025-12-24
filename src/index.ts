@@ -34,9 +34,14 @@ app.use(passport.initialize())
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello Nguyen Huu Nhat Huy')
 })
+
+
+// ... existing code ...
+
 AppDataSource.initialize()
-    .then(() => {
+    .then(async () => {
         console.log("Database connected successfully!")
+
         app.use('/api/v1', mainRouter)
         app.use('/api-docs', buildOpenAPIRouter())
         app.use(errorHandler);

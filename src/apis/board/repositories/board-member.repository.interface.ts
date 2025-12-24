@@ -6,5 +6,6 @@ export interface IBoardMemberRepository {
     findByBoardId(boardId: string): Promise<BoardMember[]>;
     create(data: Partial<BoardMember>): Promise<BoardMember>;
     save(member: BoardMember): Promise<BoardMember>;
-    delete(member: BoardMember): Promise<void>;
+    update(id: string, member: Partial<BoardMember>): Promise<void>;
+    delete(id: string): Promise<void>;
 }

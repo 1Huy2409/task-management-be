@@ -14,7 +14,12 @@ export const toWorkspaceResponse = (workspace: Workspace): WorkspaceResponse => 
         title: board.title,
         description: board.description,
         coverUrl: board.coverUrl,
-        visibility: board.visibility
+        visibility: board.visibility,
+        ownerId: board.ownerId,
+        status: board.status,
+        workspaceId: board.workspaceId,
+        created_at: board.created_at,
+        updated_at: board.updated_at
     })),
     workspaceMembers: workspace.workspaceMembers?.map(member => toWorkspaceMemberResponse(member)),
     created_at: workspace.created_at,
