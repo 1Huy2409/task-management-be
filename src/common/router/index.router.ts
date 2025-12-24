@@ -53,6 +53,9 @@ import { ListRepository } from '@/apis/list/repositories/list.repository'
 import ListController from '@/apis/list/list.controller'
 import listRouter from '@/apis/list/list.router'
 import { registerListPaths } from '@/apis/list/list.openapi'
+import CardService from '@/apis/card/card.service';
+import CardController from '@/apis/card/card.controller';
+import cardRouter from '@/apis/card/card.router';
 
 const mainRouter: Router = express.Router()
 const initHealthCheckModule = () => {
@@ -184,4 +187,14 @@ initWorkspaceModule();
 initJoinLinkModule();
 initBoardModule();
 initListModule();
+const initCardModule = () => {
+    const cardOrmRepo = AppDataSource.getRepository(Card);
+    const cardRepository = new CardRepository(cardOrmRepo);
+    const listOrmRepo = AppDataSource.getRepository(List);
+    const listRepository = new ListRepository(listOrmRepo);
+    const cardService = new CardService(cardRepository, listRepository, AppDataSource);
+    const cardController = new CardController(cardService);
+    mainRouter.use('/cards', cardRouter(cardController));
+}
+initCardModule();
 export default mainRouter;

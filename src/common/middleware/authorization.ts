@@ -1,4 +1,6 @@
 import { AuthorizationHelper } from "../utils/authorizationHelper";
+import { CardRepository } from "@/apis/card/repositories/card.repository";
+import { Card } from "@/common/entities/card.entity";
 import { NextFunction, Request, Response } from "express";
 import { AuthFailureError, BadRequestError, ForbiddenError } from "../handler/error.response";
 import { PermissionKey } from "../constants/permissions";
@@ -8,6 +10,7 @@ import { AppDataSource } from "@/config/db.config";
 import { List } from "../entities/list.entity";
 const authorizationHelper = new AuthorizationHelper();
 const listRepository = new ListRepository(AppDataSource.getRepository(List));
+const cardRepository = new CardRepository(AppDataSource.getRepository(Card));
 export const checkWorkspacePermission = (requiredPermission: PermissionKey) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
@@ -69,7 +72,7 @@ export const checkListPermission = (requiredPermission: PermissionKey) => {
             if (!userId) {
                 throw new AuthFailureError('User not authenticated', 401);
             }
-            const listId = req.params.listId || req.params.id || req.body.listId;
+            const listId = req.params.listId || req.params.id || req.body.listId || req.query.listId as string;
             if (!listId) {
                 throw new BadRequestError('List ID is required');
             }
@@ -136,6 +139,41 @@ export const checkCrossListPermission = (
         }
         catch (error) {
             console.error('Error in checkCrossListPermission middleware:', error);
+            next(error)
+        }
+    }
+}
+export const checkCardPermission = (requiredPermission: PermissionKey) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = req.user?.id
+            if (!userId) {
+                throw new AuthFailureError('User not authenticated', 401);
+            }
+            const cardId = req.params.cardId || req.params.id || req.body.cardId;
+            if (!cardId) {
+                throw new BadRequestError('Card ID is required');
+            }
+            const card = await cardRepository.findByIdWithList(cardId);
+            if (!card) {
+                throw new BadRequestError(`Card with ID ${cardId} not found`);
+            }
+            if (!card.list) {
+                throw new Error(`Card with ID ${cardId} belongs to no list`);
+            }
+            const boardId = card.list.boardId;
+            const hasPermission = await authorizationHelper.canAccessBoard(
+                userId,
+                boardId,
+                requiredPermission
+            )
+            if (!hasPermission) {
+                throw new ForbiddenError('You do not have permission to access this board');
+            }
+            next();
+        }
+        catch (error) {
+            console.error('Error in checkCardPermission middleware:', error);
             next(error)
         }
     }
