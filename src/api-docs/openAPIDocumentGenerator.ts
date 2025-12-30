@@ -7,6 +7,8 @@ import { userRegistry } from "@/apis/user/user.router";
 import { workspaceRegistry } from "@/apis/workspace/workspace.router";
 import { cardRegistry } from "@/apis/card/card.openapi";
 import { checklistRegistry } from "@/apis/checklist/checklist.openapi";
+import { commentRegistry } from "@/apis/comment/comment.router";
+import { attachmentRegistry } from "@/apis/attachment/attachment.router";
 import { OpenApiGeneratorV3, OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 export function generateOpenAPIDocument(): ReturnType<InstanceType<typeof OpenApiGeneratorV3>['generateDocument']> {
@@ -19,7 +21,9 @@ export function generateOpenAPIDocument(): ReturnType<InstanceType<typeof OpenAp
         joinLinkRegistry,
         listRegistry,
         cardRegistry,
-        checklistRegistry
+        checklistRegistry,
+        commentRegistry,
+        attachmentRegistry
     ]);
     registry.registerComponent('securitySchemes', 'bearerAuth', {
         type: 'http',

@@ -11,6 +11,7 @@ import { ICardMemberRepository } from "./repositories/card-member.repository.int
 import { IBoardMemberRepository } from "../board/repositories/board-member.repository.interface";
 import { User } from "@/common/entities/user.entity";
 import { BadRequestError } from "@/common/handler/error.response";
+import { AttachmentRepository } from '../attachment/repositories/attachment.repository';
 
 export default class CardService {
     constructor(
@@ -18,7 +19,8 @@ export default class CardService {
         private listRepository: IListRepository,
         private cardMemberRepository: ICardMemberRepository,
         private boardMemberRepository: IBoardMemberRepository,
-        private dataSource: DataSource
+        private dataSource: DataSource,
+        private attachmentRepository: AttachmentRepository // Add attachment repository
     ) { }
 
     getAll = async (listId: string): Promise<CardResponseSchema[]> => {
@@ -153,5 +155,18 @@ export default class CardService {
             throw new NotFoundError('User is not a member of this card');
         }
         await this.cardMemberRepository.delete(member.id);
+    }
+
+    async uploadAttachment(cardId: string, file: Express.Multer.File) {
+        const card = await this.cardRepository.findById(cardId);
+        if (!card) {
+            throw new NotFoundError(`Card with ID ${cardId} not found`);
+        }
+
+        return this.attachmentRepository.createAttachment(cardId, file);
+    }
+
+    async deleteAttachment(attachmentId: string) {
+        await this.attachmentRepository.deleteAttachment(attachmentId);
     }
 }
