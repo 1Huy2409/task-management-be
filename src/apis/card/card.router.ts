@@ -4,6 +4,9 @@ import { asyncHandler } from "@/common/middleware/asyncHandler";
 import { checkAuthentication } from "@/common/middleware/authentication";
 import { PERMISSIONS } from "@/common/constants/permissions";
 import { checkCardPermission, checkListPermission } from "@/common/middleware/authorization";
+import multer from 'multer';
+
+const upload = multer({ dest: 'uploads/' }); // Configure multer for file uploads
 
 export default function cardRouter(cardController: CardController): Router {
     const router = Router();
@@ -48,6 +51,29 @@ export default function cardRouter(cardController: CardController): Router {
         asyncHandler(checkAuthentication),
         asyncHandler(checkCardPermission(PERMISSIONS.CARD_ASSIGN)),
         asyncHandler(cardController.removeMember)
+    );
+
+    router.post('/:cardId/attachments',
+        asyncHandler(checkAuthentication),
+        asyncHandler(checkCardPermission(PERMISSIONS.CARD_UPDATE)),
+        upload.single('file'),
+        asyncHandler((req, res) => {
+            if (!req.params.cardId) {
+                return res.status(400).json({ error: 'Missing or invalid cardId parameter' });
+            }
+            cardController.uploadAttachment(req, res);
+        })
+    );
+
+    router.delete('/attachments/:attachmentId',
+        asyncHandler(checkAuthentication),
+        asyncHandler(checkCardPermission(PERMISSIONS.CARD_UPDATE)),
+        asyncHandler((req, res) => {
+            if (!req.params.attachmentId) {
+                return res.status(400).json({ error: 'Missing or invalid attachmentId parameter' });
+            }
+            cardController.deleteAttachment(req, res);
+        })
     );
 
     return router;

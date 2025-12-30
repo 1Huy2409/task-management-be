@@ -120,4 +120,41 @@ export default class CardController {
         );
         return handleServiceResponse(serviceResponse, res);
     }
+
+    uploadAttachment = async (req: Request, res: Response) => {
+        const { cardId } = req.params;
+        if (!cardId) {
+            throw new BadRequestError('Card ID is required');
+        }
+
+        const file = req.file;
+        if (!file) {
+            throw new BadRequestError('File is required');
+        }
+
+        const attachment = await this.cardService.uploadAttachment(cardId, file);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Attachment uploaded successfully',
+            attachment,
+            StatusCodes.OK
+        );
+        return handleServiceResponse(serviceResponse, res);
+    }
+
+    deleteAttachment = async (req: Request, res: Response) => {
+        const { attachmentId } = req.params;
+        if (!attachmentId) {
+            throw new BadRequestError('Attachment ID is required');
+        }
+
+        await this.cardService.deleteAttachment(attachmentId);
+        const serviceResponse = new ServiceResponse(
+            ResponseStatus.Sucess,
+            'Attachment deleted successfully',
+            null,
+            StatusCodes.OK
+        );
+        return handleServiceResponse(serviceResponse, res);
+    }
 }
